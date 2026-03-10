@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OTBU — Online Terrain Barrier Update</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #1a1e2a;
+      --border: #252a38;
+      --accent: #4f8ef7;
+      --accent2: #7c5cfc;
+      --accent3: #3ecfb2;
+      --text: #d4daf0;
+      --text-muted: #7a82a0;
+      --heading: #eef1ff;
+      --code-bg: #0b0d12;
+      --tag-bg: #1e2538;
+      --warning: #e8a44a;
+      --danger: #e05a5a;
+      --success: #3ecfb2;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    nav {
+      width: 280px;
+      min-width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 2rem 0;
+    }
+
+    nav .logo {
+      padding: 0 1.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    nav .logo h2 {
+      font-size: 1.2rem;
+      color: var(--heading);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    nav .logo span {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    nav ul { list-style: none; }
+    nav ul li a {
+      display: block;
+      padding: 0.35rem 1.5rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.15s, background 0.15s;
+      border-left: 2px solid transparent;
+    }
+    nav ul li a:hover { color: var(--accent); background: var(--surface2); }
+    nav ul li a.active { color: var(--accent); border-left-color: var(--accent); }
+    nav ul li.section-label {
+      padding: 0.8rem 1.5rem 0.3rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    nav ul li.sub > a { padding-left: 2.5rem; font-size: 0.82rem; }
+
+    main {
+      flex: 1;
+      max-width: 900px;
+      padding: 3rem 3.5rem;
+      overflow-x: hidden;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      margin-bottom: 3.5rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero .badge-row {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.2rem;
+    }
+    .badge {
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .badge.green { color: var(--accent3); }
+    .badge.purple { color: var(--accent2); }
+    .hero h1 {
+      font-size: 2.4rem;
+      color: var(--heading);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p { color: var(--text-muted); font-size: 1.05rem; max-width: 680px; }
+
+    /* ── Sections ── */
+    section { margin-bottom: 3.5rem; }
+    h2 {
+      font-size: 1.5rem;
+      color: var(--heading);
+      font-weight: 700;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: 2rem;
+    }
+    h3 {
+      font-size: 1.1rem;
+      color: var(--heading);
+      font-weight: 600;
+      margin: 1.8rem 0 0.8rem;
+      scroll-margin-top: 2rem;
+    }
+    h4 {
+      font-size: 0.95rem;
+      color: var(--accent);
+      font-weight: 600;
+      margin: 1.2rem 0 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    p { margin-bottom: 0.9rem; }
+
+    /* ── Code ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem 1.4rem;
+      overflow-x: auto;
+      margin: 1rem 0 1.2rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    code {
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84em;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      padding: 0.1em 0.45em;
+      border-radius: 4px;
+      color: var(--accent3);
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      color: #c8d3f5; font-size: inherit;
+    }
+
+    /* ── Math ── */
+    .math-block {
+      background: var(--surface2);
+      border-left: 3px solid var(--accent2);
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.4rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; margin: 1rem 0 1.4rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th {
+      background: var(--surface2);
+      color: var(--heading);
+      padding: 0.65rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border);
+    }
+    td {
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    tr:hover td { background: var(--surface2); }
+    td code { font-size: 0.82rem; }
+
+    /* ── Architecture diagram ── */
+    .arch {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.4rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: #8fa3d4;
+      overflow-x: auto;
+    }
+    .arch .hi { color: var(--accent); }
+    .arch .hi2 { color: var(--accent3); }
+    .arch .hi3 { color: var(--accent2); }
+
+    /* ── Callouts ── */
+    .callout {
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin: 1.2rem 0;
+      font-size: 0.9rem;
+      border-left: 4px solid;
+    }
+    .callout.warn {
+      background: rgba(232, 164, 74, 0.08);
+      border-color: var(--warning);
+      color: var(--warning);
+    }
+    .callout.bug {
+      background: rgba(224, 90, 90, 0.08);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .callout.info {
+      background: rgba(79, 142, 247, 0.08);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .callout strong { font-weight: 700; }
+
+    /* ── Module cards ── */
+    .module-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem 1.6rem;
+      margin: 1.2rem 0;
+    }
+    .module-card .module-title {
+      font-family: 'Fira Code', monospace;
+      font-size: 1rem;
+      color: var(--accent3);
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+    .module-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 860px) {
+      nav { display: none; }
+      main { padding: 2rem 1.4rem; }
+      .hero h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ════ SIDEBAR NAV ════ -->
+  <nav>
+    <div class="logo">
+      <h2>OTBU Docs</h2>
+      <span>Planetary Landing Guidance</span>
+    </div>
+    <ul>
+      <li class="section-label">Introduction</li>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#architecture">System Architecture</a></li>
+
+      <li class="section-label">Mathematics</li>
+      <li><a href="#eom">Equations of Motion</a></li>
+      <li><a href="#tgo">Time-to-Go Estimation</a></li>
+      <li><a href="#mssotalg">MSS-OTALG Law (Eq. 2)</a></li>
+      <li><a href="#smc">Sliding Mode Control</a></li>
+      <li><a href="#otbu-algo">OTBU Algorithm 1</a></li>
+      <li><a href="#divert-math">Divert Repulsion Field</a></li>
+      <li><a href="#composite">Composite Command</a></li>
+
+      <li class="section-label">Module Reference</li>
+      <li><a href="#mod-main">main.py</a></li>
+      <li><a href="#mod-rk45">rk45.py</a></li>
+      <li><a href="#mod-tgo">tgo_min.py</a></li>
+      <li><a href="#mod-a0">a0.py</a></li>
+      <li><a href="#mod-barriers">barriers.py</a></li>
+      <li><a href="#mod-divert">divert.py</a></li>
+      <li><a href="#mod-sliding">sliding.py</a></li>
+      <li><a href="#mod-saturation">saturation.py</a></li>
+      <li><a href="#mod-show">show.py</a></li>
+      <li><a href="#mod-controller">UnityTerrainController</a></li>
+      <li><a href="#mod-unity">TerrainDataExporter.cs</a></li>
+
+      <li class="section-label">Setup</li>
+      <li><a href="#unity-integration">Unity Integration</a></li>
+      <li><a href="#repo-structure">Repo Structure</a></li>
+      <li><a href="#dependencies">Dependencies</a></li>
+      <li><a href="#running">Running the Sim</a></li>
+
+      <li class="section-label">Reference</li>
+      <li><a href="#params">Parameters</a></li>
+      <li><a href="#limitations">Limitations & Future Work</a></li>
+      <li><a href="#references">References</a></li>
+    </ul>
+  </nav>
+
+  <!-- ════ MAIN CONTENT ════ -->
+  <main>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Python 3.10+</span>
+        <span class="badge purple">Unity 2021.3 LTS</span>
+        <span class="badge green">Mars GNC</span>
+        <span class="badge">ZEM/ZEV</span>
+        <span class="badge">SMC</span>
+        <span class="badge green">RK45</span>
+      </div>
+      <h1>OTBU — <span>Online Terrain</span><br>Barrier Update</h1>
+      <p>
+        Python/Unity simulation of the <strong>OTBU</strong> algorithm from <em>"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance"</em> (Basar &amp; Ghosh, IEEE RA-L).
+        Implements real-time terrain barrier generation integrated with the <strong>MSS-OTALG</strong> guidance law for autonomous precision soft landing on Mars.
+      </p>
+    </div>
+
+    <!-- ══ OVERVIEW ══ -->
+    <section id="overview">
+      <h2>1. Project Overview</h2>
+      <p>This repository is a Python/Unity simulation of the <strong>Online Terrain Barrier Update (OTBU)</strong> algorithm, presented in:</p>
+      <div class="callout info">
+        <strong>[OTBU]</strong> S. Z. Basar and S. Ghosh, <em>"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"</em> IEEE Robotics and Automation Letters (RA-L), 2025.
+      </div>
+      <p>OTBU generates terrain barrier functions on the fly from a world-coordinate-registered elevation grid map (onboard downward-facing camera), and feeds them into the <strong>Multiple Sliding Surfaces – Optimal Terrain Avoidance Landing Guidance (MSS-OTALG)</strong> law from <a href="#references">[1]</a> to steer the spacecraft away from hazardous terrain while achieving precision soft landing.</p>
+      <ul style="margin: 0.8rem 0 0.8rem 1.5rem; color: var(--text);">
+        <li style="margin-bottom:0.5rem"><strong style="color:var(--accent)">MSS-OTALG [1]</strong>: base guidance law combining ZEM/ZEV optimal guidance, a terrain divert term, and a Multiple Sliding Surfaces robust correction term</li>
+        <li style="margin-bottom:0.5rem"><strong style="color:var(--accent2)">OTBU (Algorithm 1)</strong>: online update of polynomial barrier functions ρ<sub>x</sub>, ρ<sub>y</sub>, ρ<sub>z</sub> at adaptive intervals, based on H-maxima peak detection</li>
+        <li style="margin-bottom:0.5rem"><strong style="color:var(--accent3)">Unity terrain simulation</strong>: substitutes for an onboard depth camera; provides live elevation grid maps over TCP</li>
+        <li><strong style="color:var(--accent)">Adaptive RK45 integration</strong>: trajectory propagation with variable step size</li>
+      </ul>
+      <p>Terrain is validated against real Martian elevation maps from NASA's HiRISE database (DTM: <em>"Possible Vent in Ceraunius Fossae"</em> <a href="#references">[15]</a>).</p>
+    </section>
+
+    <!-- ══ ARCHITECTURE ══ -->
+    <section id="architecture">
+      <h2>2. System Architecture</h2>
+      <div class="arch">
+<span class="hi">┌────────────────────────────────────────────────────────────────┐</span>
+<span class="hi">│                          main.py                               │</span>
+<span class="hi">│   Sets ICs, calls tgo_init, initAcc, then drives rk45 loop     │</span>
+<span class="hi">└────────────┬───────────────────────────────────────────────────┘</span>
+             │  f(t, y)  called at each integration step
+             ▼
+<span class="hi2">┌────────────────────────────────────────────────────────────────┐</span>
+<span class="hi2">│                        ODE RHS (in main.py)                    │</span>
+│                                                                │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌───────────┐  │
+│  │ barriers │   │  divert  │   │ sliding  │   │saturation │  │
+│  │ (terrain │──▶│(repulsion│   │  (SMC    │──▶│ (boundary │  │
+│  │  query)  │   │ gradient)│   │ surface) │   │  layer)   │  │
+│  └────┬─────┘   └────┬─────┘   └────┬─────┘   └─────┬─────┘  │
+│       └──────────────┴──────────────┴────────────────┘        │
+│                             │                                  │
+│                    <span class="hi">a = a_ogl + a_divert + a_smc</span>                │
+│                             │                                  │
+│                    ┌────────▼────────┐                         │
+│                    │  Thrust model   │                         │
+│                    │ (T = a·m, capped│                         │
+│                    │  + noise band)  │                         │
+│                    └────────┬────────┘                         │
+│                ẋ = [v, g + T/m, ṁ, ȧ]                         │
+<span class="hi2">└─────────────────────────────┬──────────────────────────────────┘</span>
+                              │
+              ┌───────────────▼───────────────┐
+              │         <span class="hi3">rk45.py</span>               │
+              │  Adaptive RK45 integrator     │
+              └───────────────┬───────────────┘
+                              │
+              ┌───────────────▼───────────────┐
+              │      <span class="hi2">rk45_results.npz</span>          │
+              └───────────────┬───────────────┘
+                              ▼
+                          <span class="hi">show.py</span>
+                   Load &amp; visualise + Unity cam
+
+<span class="hi3">Unity TCP Server (port 5555)</span>
+  <span class="hi3">TerrainDataExporter.cs</span>  ◄──────────────►  <span class="hi3">TerrainMap/unityTerrainController.py</span>
+  (C# TCP listener,                  (Python TCP client,
+   camera + terrain export)           terrain data loader)
+      </div>
+    </section>
+
+    <!-- ══ MATH FOUNDATIONS ══ -->
+    <section id="eom">
+      <h2>3. Mathematical Foundations</h2>
+      <p>All mathematics follows the paper <a href="#references">[OTBU]</a> and the base MSS-OTALG law from <a href="#references">[1]</a>. Notation is preserved from those works.</p>
+      <h3>3.1 Equations of Motion</h3>
+      <p>The landing site is the origin of a local <strong>East-North-Up (ENU)</strong> frame. The lander is modelled as a 3-DOF point mass (paper Eq. (1)):</p>
+      <div class="math-block">
+        \[ \dot{\mathbf{r}} = \mathbf{v}, \qquad \dot{\mathbf{v}} = \mathbf{a}_c + \mathbf{g} + \mathbf{a}_p \]
+        \[ \dot{m} = -\frac{\|\mathbf{T}\|}{I_{sp}\,g_e}, \qquad \dot{\mathbf{a}}_c = \frac{\mathbf{a}_{cmd} - \mathbf{a}_c}{\tau} \]
+      </div>
+      <p>where \(\mathbf{g} = [0,\,0,\,-g]^T\) (valid for low-altitude powered descent), \(\mathbf{a}_c = \mathbf{T}/m\) is the guidance acceleration command, \(\mathbf{a}_p\) is bounded perturbation acceleration, and \(\tau\) is the actuator lag time constant. A ±5% uniform noise band is applied per thrust component:</p>
+      <div class="math-block">
+        \[ T_i \sim \mathcal{U}(0.95\,T_{cmd,i},\; 1.05\,T_{cmd,i}) \]
+      </div>
+    </section>
+
+    <section id="tgo">
+      <h3>3.2 Time-to-Go Estimation</h3>
+      <p>The optimal time-to-go is computed using the method of <a href="#references">[14]</a>. Solving for the energy-optimal terminal time yields a quartic in \(t_{go}\):</p>
+      <div class="math-block">
+        \[ D \cdot t_{go}^4 + A \cdot t_{go}^2 + B \cdot t_{go} + C = 0 \]
+        \[
+          A = -2\!\left(\|\mathbf{v}_0\|^2 + \mathbf{v}_f \cdot \mathbf{v}_0 + \|\mathbf{v}_f\|^2\right), \quad
+          B = 12\,(\mathbf{r}_f - \mathbf{r}_0)\cdot(\mathbf{v}_0 + \mathbf{v}_f)
+        \]
+        \[ C = -18\|\mathbf{r}_f - \mathbf{r}_0\|^2, \quad D = \tfrac{1}{2}\|\mathbf{g}\|^2 \]
+      </div>
+      <p>The minimum real non-negative root is \(t_{go,opt}\). As noted in the paper, this does not account for time lost to divert manoeuvres, so a <strong>20 s buffer</strong> is added: <code>tf = tgo_init(...) + 20</code>.</p>
+    </section>
+
+    <section id="mssotalg">
+      <h3>3.3 MSS-OTALG Guidance Law</h3>
+      <p>The base guidance law is <strong>MSS-OTALG</strong> <a href="#references">[1]</a>. The full command is (Eq. (2) of <a href="#references">[OTBU]</a>):</p>
+      <div class="math-block">
+        \[
+          \mathbf{a}_c = \frac{6}{t_{go}^2}\,\text{ZEM} - \frac{2}{t_{go}}\,\text{ZEV}
+          + \mathbf{p}\,\frac{t_{go}^2}{12} - \boldsymbol{\Phi}\,\text{sgn}(\mathbf{s}_2)
+        \]
+      </div>
+      <div class="math-block">
+        \[
+          \text{ZEM} = \mathbf{r}_f^d - \!\left[\mathbf{r}(t) + \mathbf{v}\,t_{go} + \tfrac{1}{2}\mathbf{g}\,t_{go}^2\right], \quad
+          \text{ZEV} = \mathbf{v}_f^d - \left[\mathbf{v}(t) + \mathbf{g}\,t_{go}\right]
+        \]
+      </div>
+      <p>The four terms: ZEM/ZEV provides fuel-optimal steering; \(\mathbf{p}\,t_{go}^2/12\) is the OTBU divert term; \(-\boldsymbol{\Phi}\,\text{sgn}(\mathbf{s}_2)\) is the MSS robust term.</p>
+      <div class="callout info">
+        <strong>Implementation note:</strong> The paper uses \(\text{sgn}(\mathbf{s}_2)\). This code substitutes a saturation function with boundary layer \(\varepsilon = 0.1\) to eliminate chattering:
+        \[ \text{sat}(s_2,\varepsilon) = \begin{cases} s_2/\varepsilon & |s_2| < \varepsilon \\\\ \text{sgn}(s_2) & |s_2| \geq \varepsilon \end{cases} \]
+      </div>
+    </section>
+
+    <section id="smc">
+      <h3>3.4 Sliding Mode Control</h3>
+      <p><strong>Surface 1</strong> (position error):</p>
+      <div class="math-block">
+        \[ \mathbf{s}_1 = \mathbf{r} - \mathbf{r}_f^d, \qquad \dot{\mathbf{s}}_1 = \mathbf{v} - \mathbf{v}_f^d \]
+      </div>
+      <p><strong>Surface 2</strong> with virtual controller gain \(\Lambda = 2\):</p>
+      <div class="math-block">
+        \[ \mathbf{s}_2 = \dot{\mathbf{s}}_1 + \frac{\Lambda}{t_{go}}\,\mathbf{s}_1 \]
+      </div>
+      <p><strong>Switching gain</strong> \(\boldsymbol{\Phi}\) with \(k_1 = 0.2\), \(k_2 = 0.8\):</p>
+      <div class="math-block">
+        \[ \boldsymbol{\Phi} = k_1\,a_{p,max}\,\mathbf{I} + k_2\,\frac{|\mathbf{p}|}{12}\,t_{go}^2 \]
+      </div>
+    </section>
+
+    <section id="otbu-algo">
+      <h3>3.5 OTBU Algorithm — Terrain Barrier Update</h3>
+      <p><strong>Algorithm 1</strong> (from <a href="#references">[OTBU]</a>). Initialised with \(\mathbf{r}_H\), \(\mathbf{r}_f^d\), \(t_{last}\), \(\delta\), \(\Delta t_1 &lt; \Delta t_2\), \(\Theta\), \(\alpha\), \(m\).</p>
+      <pre><code>procedure OTBU(F, r, t):
+  if &#8214;r &#8722; rf&#8214; &lt; &#920;:  &#916;t &#8592; &#916;t1  (near: faster updates)
+  else:            &#916;t &#8592; &#916;t2  (far: slower updates)
+
+  if t &#8722; tlast &#8805; &#916;t or t == 0:
+    tlast &#8592; t
+    im    &#8592; ExtendedMaxima(F, &#945;)  # H-maxima transform
+    s     &#8592; GetCentroids(im)
+    rpeak &#8592; max(s)
+
+    if rz &#8722; rHz &gt; &#948;:  &#961;z &#8592; rHz + &#948;;  b &#8592; rH
+    else:            &#961;z &#8592; rpeakz + &#948;;  b &#8592; rpeak
+
+    for &#957; = x, y:
+      if b&#957; &gt; rf&#957;:
+        i&#957; &#8592; (b&#957;&#8722;rf&#957;)^m / (bz&#8722;rfz)
+        j&#957; &#8592; (b&#957;&#8722;rf&#957;)^m &#8722; i&#957;&#183;bz
+        &#961;&#957; &#8592; (i&#957;&#183;rz + j&#957;)^(1/m) + rf&#957;
+      elif b&#957; &lt; rf&#957;:
+        p&#957; &#8592; (rf&#957;&#8722;b&#957;)^m / (bz&#8722;rfz)
+        q&#957; &#8592; (rf&#957;&#8722;b&#957;)^m &#8722; p&#957;&#183;bz
+        T&#957; &#8592; &#8722;rf&#957;
+        &#961;&#957; &#8592; &#8722;((p&#957;&#183;rz + q&#957;)^(1/m) + T&#957;)
+      else:
+        &#961;&#957; &#8592; Inf  # canyon case</code></pre>
+      <ul style="margin:0.8rem 0 0.5rem 1.5rem; color:var(--text); font-size:0.9rem;">
+        <li style="margin-bottom:0.4rem">The vertical barrier switches from \(\mathbf{r}_H\) (orbital pre-estimate) to \(\mathbf{r}_{peak}\) (onboard camera) once below \(r_{Hz}+\delta\), minimising guidance transients</li>
+        <li style="margin-bottom:0.4rem">Lateral barriers are polynomial curves of order \(m=0.5\) passing through both \(\mathbf{b}\) and \(\mathbf{r}_f^d\)</li>
+        <li>Canyon case (\(b_\nu = r_{f\nu}^d\)): \(\rho_\nu = \infty\); remaining barriers still prevent a crash</li>
+      </ul>
+
+    </section>
+
+    <section id="divert-math">
+      <h3>3.6 Divert Repulsion Field</h3>
+      <p>For each axis \(i \in \{x,y,z\}\), given signed distance \(d_i \triangleq r_i - \rho_i\) (Eq. (3) of <a href="#references">[OTBU]</a>):</p>
+      <div class="math-block">
+        \[
+          \psi_i = \frac{\ell_{2,i}}{d_i^2 + \ell_{1,i}}, \qquad
+          \dot{p}_{r_i} = \frac{d_i\,\ell_{2,i}\,\ell_{3,i}\,e^{-\psi_i}}{(d_i^2 + \ell_{1,i})^2}
+        \]
+      </div>
+      <p>with \(\ell_{1,i}=1\), \(\ell_{2,i}=9500\), \(\ell_{3,i}=500\). The field vanishes both on the barrier (\(d_i \to 0\)) and far from it (\(d_i \to \infty\)), producing a smooth repulsion lobe at intermediate distances.</p>
+    </section>
+
+    <section id="composite">
+      <h3>3.7 Composite Acceleration Command (Full)</h3>
+      <p>The complete MSS-OTALG guidance command as implemented (saturation substituted for sgn):</p>
+      <div class="math-block">
+        \[
+          \mathbf{a}_c =
+          \underbrace{\frac{6\,\text{ZEM}}{t_{go}^2} - \frac{2\,\text{ZEV}}{t_{go}}}_{\text{ZEM/ZEV optimal}}
+          + \underbrace{\mathbf{p}\,\frac{t_{go}^2}{12}}_{\text{OTBU divert}}
+          + \underbrace{-\boldsymbol{\Phi}\,\text{sat}(\mathbf{s}_2,\varepsilon)}_{\text{MSS robust}}
+        \]
+      </div>
+      <p>Passed through first-order actuator lag \(\tau\), then converted to thrust \(\mathbf{T} = \mathbf{a}_c \cdot m\).</p>
+    </section>
+
+
+    <!-- ══ MODULE REFERENCE ══ -->
+    <section id="mod-main">
+      <h2>4. Module Reference</h2>
+      <div class="module-card">
+        <div class="module-title">main.py — Entry Point</div>
+        <p>Defines initial and terminal conditions, instantiates guidance parameters, defines the ODE right-hand side <code>f(t, y)</code>, and drives the integrator.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Symbol</th><th>Value</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>r0</code></td><td><code>[704, 145, 721]</code> m</td><td>Initial position (ENU-like frame)</td></tr>
+              <tr><td><code>v0</code></td><td><code>[-55.9, 22.9, -83.8]</code> m/s</td><td>Initial velocity</td></tr>
+              <tr><td><code>m0</code></td><td>1905 kg</td><td>Initial mass</td></tr>
+              <tr><td><code>rf</code></td><td><code>[453, 786, 145]</code> m</td><td>Target landing site</td></tr>
+              <tr><td><code>vf</code></td><td><code>[0, 0, 0.5]</code> m/s</td><td>Terminal velocity (soft touchdown)</td></tr>
+              <tr><td><code>Tmax</code></td><td>8 × 3100 / √3 N</td><td>Maximum thrust magnitude</td></tr>
+              <tr><td><code>tau</code></td><td>5/90 s</td><td>Actuator time constant</td></tr>
+              <tr><td><code>eps</code></td><td>0.1</td><td>SMC boundary layer width</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout info"><strong>Design note:</strong> The <code>state</code> dict is used as a closure to persist <code>t_last</code> and <code>rho_last</code> across ODE evaluations. This prevents unnecessary Unity TCP queries during RK45 sub-steps while keeping the ODE function stateless in signature.</div>
+      </div>
+    </section>
+
+    <section id="mod-rk45">
+      <div class="module-card">
+        <div class="module-title">rk45.py — Adaptive Integrator</div>
+        <p>Implements the Runge-Kutta-Fehlberg (RK45) method with adaptive step size control. Computes both 4th-order (<code>y4</code>) and 5th-order (<code>y5</code>) solutions at each step.</p>
+        <p>Local truncation error estimate and step update rule:</p>
+        <div class="math-block">
+          \[
+            E = \max_i |y5_i - y4_i|, \qquad
+            h_{new} = 0.9 \cdot h \cdot \left(\frac{\text{tol}}{E}\right)^{0.2}
+          \]
+        </div>
+        <p><strong>Early termination</strong> if: \(\|\mathbf{r} - \mathbf{r}_f\| < 0.1\) m, or any state element is non-finite.</p>
+      </div>
+    </section>
+
+    <section id="mod-tgo">
+      <div class="module-card">
+        <div class="module-title">tgo_min.py — Time-to-Go Estimation</div>
+        <p>Solves the quartic polynomial (§3.2) via <code>np.roots</code>. Returns the minimum real non-negative root as the energy-optimal \(t_{go,\min}\).</p>
+        <pre><code>tgo_init(r0, v0, rf, vf) -> tf  # final time = t_go,opt + 20s buffer</code></pre>
+      </div>
+    </section>
+
+    <section id="mod-a0">
+      <div class="module-card">
+        <div class="module-title">a0.py — Initial Acceleration</div>
+        <p>Evaluates the full composite guidance law at \(t=0\) to provide a consistent initial condition for the actuator state \(\mathbf{a}_c(0)\). This avoids a step discontinuity at \(t = 0^+\).</p>
+        <pre><code>initAcc(r0, v0, rf, vf, eps, tf, highest, t=0) -> (a0, t_last, rho_init)</code></pre>
+      </div>
+    </section>
+
+    <section id="mod-barriers">
+      <div class="module-card">
+        <div class="module-title">barriers.py — Terrain Barrier Computation</div>
+        <p>Queries Unity terrain data via <code>UnityTerrainController</code>, applies h-maxima peak detection, and computes the 3D barrier surface \(\boldsymbol{\rho}(r_z)\) as described in §3.5.</p>
+        <pre><code>barriers(r, rf, highest, rho_last, t_last, t) -> (rho, t_last)</code></pre>
+        <p><strong>Caching:</strong> If \(|t - t_{last}| &lt; \Delta t\), the cached <code>rho_last</code> is returned without querying Unity — this is critical for performance during RK45 sub-steps.</p>
+      </div>
+    </section>
+
+    <section id="mod-divert">
+      <div class="module-card">
+        <div class="module-title">divert.py — Repulsion Field</div>
+        <p>Computes the smooth barrier repulsion gradient \(\mathbf{p}\) from signed distance \(\mathbf{d} = \mathbf{r} - \boldsymbol{\rho}\). See §3.6 for the full derivation.</p>
+        <pre><code>divert(r, rho) -> (d, p)</code></pre>
+      </div>
+    </section>
+
+    <section id="mod-sliding">
+      <div class="module-card">
+        <div class="module-title">sliding.py — Sliding Surface</div>
+        <p>Computes the two SMC surfaces \(\mathbf{s}_1\) and \(\mathbf{s}_2\) (§3.4). Default decay rate \(\lambda = 2\).</p>
+        <pre><code>sliding(r, rf, v, vf, tgo, lam=2) -> (s1, s2)</code></pre>
+      </div>
+    </section>
+
+    <section id="mod-saturation">
+      <div class="module-card">
+        <div class="module-title">saturation.py — Boundary Layer Saturation</div>
+        <p>Vectorised saturation function (§3.4). Uses <code>np.where</code> for efficient elementwise evaluation over 3-vector inputs.</p>
+        <pre><code>saturation(x, width=1.0) -> np.ndarray</code></pre>
+      </div>
+    </section>
+
+    <section id="mod-show">
+      <div class="module-card">
+        <div class="module-title">show.py — Visualisation</div>
+        <p>Loads <code>rk45_results.npz</code>, replays the trajectory through Unity's camera controller, and plots mass and acceleration histories. Note the coordinate remap for Unity's Y-up convention:</p>
+        <pre><code>controller.move_camera(r[i,0], r[i,2], r[i,1])
+# Python y (North) → Unity Z
+# Python z (Up)    → Unity Y</code></pre>
+      </div>
+    </section>
+
+    <section id="mod-controller">
+      <div class="module-card">
+        <div class="module-title">TerrainMap/unityTerrainController.py</div>
+        <p>TCP client for the <code>TerrainDataExporter</code> server, located at <code>./TerrainMap/unityTerrainController.py</code>. Sends JSON-encoded commands and deserialises the returned terrain height map.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>send_command(command_dict)</code></td><td>Low-level: opens socket, sends JSON, returns parsed response</td></tr>
+              <tr><td><code>move_camera(x, y, z)</code></td><td>Move orthographic camera to world position</td></tr>
+              <tr><td><code>move_and_export(x, y, z)</code></td><td>Atomic move + terrain export command</td></tr>
+              <tr><td><code>load_terrain_data()</code></td><td>Read <code>terrain_data.json</code> from disk → <code>{x, y, z}</code> arrays</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The terrain data schema:</p>
+        <pre><code>{
+  "x": [float, ...],    // 1D, length=resolution (world X coords)
+  "y": [float, ...],    // 1D, length=resolution (world Z coords, Unity convention)
+  "z": [[float, ...]]   // 2D resolution×resolution, height values
+}</code></pre>
+        <div class="callout info"><strong>Note:</strong> Each call to <code>send_command</code> opens and closes a fresh TCP socket. This keeps the protocol simple but adds per-call overhead; connection pooling would reduce latency for high-frequency terrain queries.</div>
+      </div>
+    </section>
+
+    <section id="mod-unity">
+      <div class="module-card">
+        <div class="module-title">TerrainMap/Assets/TerrainDataExporter.cs</div>
+        <p>Unity-side TCP server attached to a <code>GameObject</code> in the scene. Listens on <code>127.0.0.1:5555</code> and also provides real-time <strong>trajectory visualisation</strong> via a child <code>LineRenderer</code>.</p>
+
+        <h4>TCP Commands</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Command</th><th>Behaviour</th></tr></thead>
+            <tbody>
+              <tr><td><code>move_camera</code></td><td>Queues camera position update on main thread; appends point to <code>LineRenderer</code> if <code>showTrajectory</code> is enabled</td></tr>
+              <tr><td><code>move_and_export</code></td><td>Camera move + triggers <code>ExportTerrainData()</code></td></tr>
+              <tr><td><code>clear_trajectory</code></td><td>Clears the <code>LineRenderer</code> trajectory buffer</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Trajectory Visualisation</h4>
+        <p>On <code>Start()</code>, a child <code>GameObject</code> named <code>"CameraTrajectory"</code> is created with a <code>LineRenderer</code> attached. Each camera move appends the new position to <code>trajectoryPoints</code> and is immediately reflected in the renderer, giving a live 3D descent trace inside the Unity scene.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Inspector Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>showTrajectory</code></td><td>bool</td><td>true</td><td>Toggle trajectory rendering</td></tr>
+              <tr><td><code>trajectoryColor</code></td><td>Color</td><td>Red</td><td>Line colour</td></tr>
+              <tr><td><code>trajectoryWidth</code></td><td>float</td><td>0.5</td><td>Line width in world units</td></tr>
+              <tr><td><code>trajectoryMaterial</code></td><td>Material</td><td>null</td><td>Override; falls back to <code>Sprites/Default</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Thread safety:</strong> Camera movement and terrain export are deferred to <code>Update()</code> via flag fields — required because Unity scene objects must only be accessed from the main thread.</p>
+        <div class="callout warn">
+          <strong>Race condition:</strong> <code>Thread.Sleep(1)</code> in <code>move_and_export</code> does not guarantee
+          the camera has moved before <code>shouldExportData = true</code> is consumed by <code>Update()</code>.
+          A <code>ManualResetEvent</code> handshake is required for a robust fix.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ UNITY INTEGRATION ══ -->
+    <section id="unity-integration">
+      <h2>5. Unity Integration</h2>
+      <p>The Python guidance loop and Unity communicate over a <strong>local TCP socket</strong> (loopback, port 5555):</p>
+      <div class="arch">
+<span class="hi">Python (barriers.py)</span>                        <span class="hi2">Unity (TerrainDataExporter.cs)</span>
+─────────────────────                        ──────────────────────
+move_and_export(x, y, z)  ──── JSON ──────►  ProcessCommand()
+                                              │
+                          ◄── {"status":"success"} ──
+                                              │
+                                           Update() fires:
+                                           - Camera moved
+                                           - ExportTerrainData() called
+                                           - terrain_data.json written
+                                              │
+load_terrain_data()  ─── reads file ────────►  terrain_data.json
+      </div>
+      <h3>Coordinate Convention</h3>
+      <p>Python uses <code>[x, y, z]</code> = <code>[East, North, Up]</code>. Unity uses <code>[x, y, z]</code> = <code>[East, Up, North]</code>.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Python</th><th>Unity</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>r[0]</code></td><td><code>x</code></td><td>East</td></tr>
+            <tr><td><code>r[1]</code></td><td><code>z</code></td><td>North</td></tr>
+            <tr><td><code>r[2]</code></td><td><code>y</code></td><td>Up (altitude)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ REPO STRUCTURE ══ -->
+    <section id="repo-structure">
+      <h2>6. Repository Structure &amp; Missing Files</h2>
+      <pre><code>project-root/
+├── main.py
+├── rk45.py
+├── tgo_min.py
+├── a0.py
+├── barriers.py
+├── divert.py
+├── sliding.py
+├── saturation.py
+├── show.py
+├── rk45_results.npz                    ← generated at runtime
+│
+└── TerrainMap/
+    ├── __init__.py
+    ├── unityTerrainController.py       ← Python TCP client
+    └── Assets/
+        ├── TerrainDataExporter.cs      ← attach to a GameObject in scene
+        └── terrain_data.json           ← generated at runtime by Unity</code></pre>
+
+      <div class="callout info">
+        Update <code>self.data_path</code> inside <code>TerrainMap/unityTerrainController.py</code> to point to your <code>TerrainMap/Assets/</code> folder before running.
+      </div>
+    </section>
+
+    <!-- ══ DEPENDENCIES ══ -->
+    <section id="dependencies">
+      <h2>7. Dependencies &amp; Setup</h2>
+      <h3>Python</h3>
+      <pre><code>Python >= 3.10
+numpy
+scipy
+matplotlib
+scikit-image    # h_maxima, regionprops, label</code></pre>
+      <pre><code>pip install numpy scipy matplotlib scikit-image</code></pre>
+
+      <h3>Unity</h3>
+      <ul style="margin: 0.5rem 0 0.8rem 1.5rem;">
+        <li>Unity <strong>2021.3 LTS</strong> or later</li>
+        <li>A <code>Terrain</code> object assigned to the <code>terrain</code> field on <code>TerrainDataExporter</code></li>
+        <li>An Orthographic Camera assigned to <code>orthographicCamera</code></li>
+        <li><code>TerrainDataExporter.cs</code> attached to an active <code>GameObject</code> in the scene</li>
+        <li>Scene must be in <strong>Play mode</strong> before running <code>main.py</code></li>
+      </ul>
+
+      <h3>Hardcoded Paths to Update</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Variable</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>TerrainMap/unityTerrainController.py</code></td><td><code>self.data_path</code></td><td>Path to <code>TerrainMap/Assets/terrain_data.json</code></td></tr>
+            <tr><td><code>show.py</code></td><td><code>output_path</code></td><td>Path to <code>rk45_results.npz</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ RUNNING ══ -->
+    <section id="running">
+      <h2>8. Running the Simulation</h2>
+      <h4>Step 1 — Start Unity</h4>
+      <p>Open the Unity project and enter <strong>Play mode</strong>. Confirm the TCP server is running (check Console for <code>"Server started on port 5555"</code>).</p>
+      <h4>Step 2 — Run the Guidance Simulation</h4>
+      <pre><code>python main.py</code></pre>
+      <p>This integrates the trajectory and saves results to <code>rk45_results.npz</code>.</p>
+      <h4>Step 3 — Visualise</h4>
+      <pre><code>python show.py</code></pre>
+      <p>Streams the trajectory back through the Unity camera and plots mass and acceleration time histories.</p>
+    </section>
+
+    <!-- ══ PARAMETERS ══ -->
+    <section id="params">
+      <h2>9. Parameters Reference</h2>
+      <p>Values from paper Table I <a href="#references">[OTBU]</a>. Discrepancies between paper and code are flagged.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Symbol</th><th>Paper Value</th><th>Code Value</th><th>Units</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td>Mars gravity</td><td>\(\mathbf{g}\)</td><td>\([0,0,-g]^T\)</td><td><code>[0,0,-3.7114]</code></td><td>m/s²</td><td><code>main.py</code></td></tr>
+            <tr><td>Specific impulse</td><td>\(I_{sp}\)</td><td>225</td><td>225</td><td>s</td><td><code>main.py</code></td></tr>
+            <tr><td>Max thrust</td><td>\(T_{max}\)</td><td>31,000</td><td>31,000 (ODE) / ⚠️ ≈14,318 (ap_max)</td><td>N</td><td><code>main.py</code></td></tr>
+            <tr><td>Actuator lag time constant</td><td>\(	au\)</td><td>0.0556</td><td>5/90 ≈ 0.0556 ✓</td><td>s</td><td><code>main.py</code></td></tr>
+            <tr><td>Initial mass</td><td>\(m_0\)</td><td>1905</td><td>1905</td><td>kg</td><td><code>main.py</code></td></tr>
+            <tr><td>SMC gain</td><td>\(k_1\)</td><td>0.2</td><td>0.2 ✓</td><td>—</td><td><code>main.py</code></td></tr>
+            <tr><td>SMC gain</td><td>\(k_2\)</td><td>0.8</td><td>0.8 ✓</td><td>—</td><td><code>main.py</code></td></tr>
+            <tr><td>Virtual controller gain</td><td>\(\Lambda\)</td><td>2</td><td>2 (<code>lam</code>)</td><td>—</td><td><code>sliding.py</code></td></tr>
+            <tr><td>Safety margin</td><td>\(\delta\)</td><td>95.5</td><td>95.5 (<code>delta_r</code>)</td><td>m</td><td><code>barriers.py</code></td></tr>
+            <tr><td>Switching distance</td><td>\(\Theta\)</td><td>1000</td><td>1000 ✓</td><td>m</td><td><code>barriers.py</code></td></tr>
+            <tr><td>Update interval (near)</td><td>\(\Delta t_1\)</td><td>0.05</td><td>0.05</td><td>s</td><td><code>barriers.py</code></td></tr>
+            <tr><td>Update interval (far)</td><td>\(\Delta t_2\)</td><td>0.1</td><td>0.1</td><td>s</td><td><code>barriers.py</code></td></tr>
+            <tr><td>ExtendedMaxima threshold</td><td>\(\alpha\)</td><td>10</td><td>10</td><td>m</td><td><code>barriers.py</code></td></tr>
+            <tr><td>Barrier polynomial order</td><td>\(m\)</td><td>0.5</td><td>0.5</td><td>—</td><td><code>barriers.py</code></td></tr>
+            <tr><td>Repulsion constant</td><td>\(\ell_{1,i}\)</td><td>1</td><td>1</td><td>—</td><td><code>divert.py</code></td></tr>
+            <tr><td>Repulsion constant</td><td>\(\ell_{2,i}\)</td><td>9500</td><td>9500</td><td>—</td><td><code>divert.py</code></td></tr>
+            <tr><td>Repulsion constant</td><td>\(\ell_{3,i}\)</td><td>500</td><td>500</td><td>—</td><td><code>divert.py</code></td></tr>
+            <tr><td>Boundary layer width</td><td>\(\varepsilon\)</td><td>— (uses sgn)</td><td>0.1</td><td>—</td><td><code>main.py</code></td></tr>
+            <tr><td>Est. highest point</td><td>\(\mathbf{r}_H\)</td><td><code>[480.39, 751.74, 858.82]</code>\(^T\)</td><td>⚠️ <code>[725, 581, 224]</code> (hardcoded guess)</td><td>m</td><td><code>main.py</code></td></tr>
+            <tr><td>RK45 tolerance</td><td>—</td><td>—</td><td>1e-6</td><td>—</td><td><code>rk45.py</code></td></tr>
+            <tr><td>Terrain grid resolution</td><td>—</td><td>—</td><td>100×100</td><td>px</td><td><code>TerrainDataExporter.cs</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ LIMITATIONS ══ -->
+    <section id="limitations">
+      <h2>10. Known Limitations &amp; Future Work</h2>
+      <h3>Bugs &amp; Discrepancies with the Paper</h3>
+      <div class="callout bug"><strong>\(T_{max}\) inconsistency (<code>main.py</code>):</strong> The ODE thrust cap uses <code>T_max = 10*3100 = 31000 N</code> (matches paper), but the \(a_{p,max}\) calculation uses <code>8*3100/√3 ≈ 14318 N</code>.</div>
+      <div class="callout bug"><strong>Highest point hardcoded:</strong> <code>main.py</code> sets <code>highest = [725, 581, 224]</code> with a comment acknowledging it is a guess. Paper Algorithm 1 requires \(\mathbf{r}_H\) from pre-processed orbital images — should be queried via <code>get_highest_point()</code> at startup.</div>
+      <div class="callout warn"><strong>Race condition (<code>TerrainDataExporter.cs</code>):</strong> <code>Thread.Sleep(1)</code> in <code>move_and_export</code> does not guarantee the camera has moved before <code>shouldExportData = true</code>. A <code>ManualResetEvent</code> handshake is required.</div>
+
+      <h3>Limitations</h3>
+      <ul style="margin: 0.5rem 0 1rem 1.5rem;">
+        <li>Single dominant peak assumed per terrain patch (<code>regionProps[0]</code> only)</li>
+        <li>\(\text{sgn}(\mathbf{s}_2)\) replaced with \(\text{sat}(\mathbf{s}_2, \varepsilon)\) — widens the convergence boundary layer</li>
+        <li>No fuel constraint enforcement in the guidance law</li>
+        <li>Sequential (blocking) Unity TCP calls add latency per integration step</li>
+      </ul>
+
+      <h3>Planned Extensions</h3>
+      <ul style="margin: 0.5rem 0 1rem 1.5rem;">
+        <li>Multi-peak obstacle handling</li>
+        <li>Successive convexification (SCvx) for fuel-optimal re-planning</li>
+        <li>Hardware-in-the-loop testing with IMU noise injection</li>
+        <li>Replace file-based terrain transfer with shared memory or UDP</li>
+      </ul>
+    </section>
+
+    <!-- ══ REFERENCES ══ -->
+    <section id="references">
+      <h2>11. References</h2>
+      <div class="callout info" style="margin-bottom:1rem">
+        <strong>[OTBU]</strong> S. Z. Basar and S. Ghosh, <em>"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"</em> IEEE Robotics and Automation Letters (RA-L), 2025. <em>(Primary paper — this implementation)</em>
+      </div>
+      <div class="module-card" style="padding:1rem 1.4rem;">
+        <p><strong>[1]</strong> Z. B. Sheikh and S. Ghosh, <em>"Robust near-optimal landing guidance for hazardous terrain using multiple sliding surfaces,"</em> Advances in Space Research, Jan. 2025. <em>(MSS-OTALG base guidance law)</em></p>
+        <p><strong>[11]</strong> P. Soille, <em>Morphological Image Analysis.</em> Springer Berlin Heidelberg, 1999. <em>(H-maxima transform)</em></p>
+        <p><strong>[13]</strong> S. Z. Basar and S. Ghosh, <em>"Fuel-optimal powered descent guidance for hazardous terrain,"</em> IFAC-PapersOnLine, vol. 56, no. 2, pp. 6018–6023, 2023.</p>
+        <p><strong>[14]</strong> Y. Guo, M. Hawkins, and B. Wie, <em>"Optimal feedback guidance algorithms for planetary landing and asteroid intercept,"</em> AAS/AIAA Astrodynamics Specialist Conference, 2011. <em>(Time-to-go estimation)</em></p>
+        <p style="margin-bottom:0"><strong>[15]</strong> NASA/JPL-Caltech/UArizona, <em>"Possible Vent in Ceraunius Fossae (ESP_029122_2065),"</em> HiRISE DTM. <a href="https://www.uahirise.org/dtm/ESP_029122_2065" style="color:var(--accent3)">uahirise.org</a>. <em>(Martian terrain data)</em></p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('section[id], div[id]');
+  const navLinks = document.querySelectorAll('nav a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 80) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+
+</body>
+</html>
