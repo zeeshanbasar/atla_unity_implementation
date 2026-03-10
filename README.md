@@ -27,7 +27,7 @@
    - [`saturation.py`](#saturationpy)
    - [`show.py`](#showpy)
    - [`TerrainMap/unityTerrainController.py`](#terrainmapunityterraincontrollerpy)
-   - [`TerrainDataExporter.cs`](#terraindataexportercs)
+   - [`TerrainMap/Assets/TerrainDataExporter.cs`](#terraindataexportercs)
 5. [Unity Integration](#5-unity-integration)
 6. [Repository Structure & Missing Files](#6-repository-structure--missing-files)
 7. [Dependencies & Setup](#7-dependencies--setup)
