@@ -42,7 +42,7 @@
 
 This repository is a Python/Unity simulation implementation of the **Online Terrain Barrier Update (OTBU)** algorithm, presented in:
 
-> **S. Z. Basar and S. Ghosh**, *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"* IEEE Robotics and Automation Letters (RA-L). [[Paper]](#11-references)
+> **S. Z. Basar and S. Ghosh**, *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"* Manuscript Under Preparation for IEEE Robotics and Automation Letters (RA-L). [[Paper]](#11-references)
 
 OTBU generates terrain barrier functions on the fly using onboard elevation data (a world-coordinate-registered grid map from a downward-facing camera), and feeds them into the **Multiple Sliding Surfaces – Optimal Terrain Avoidance Landing Guidance (MSS-OTALG)** law from [[1]](#11-references) to steer the spacecraft away from hazardous terrain while achieving precision soft landing.
 
@@ -163,10 +163,10 @@ $$\mathbf{a}_c = \frac{6}{t_{go}^2}\,\text{ZEM} - \frac{2}{t_{go}}\,\text{ZEV} +
 
 where $t_{go} \triangleq t_f - t$, and:
 
-- **ZEM** (Zero Effort Miss): $\text{ZEM} = \mathbf{r}_f^d - \left[\mathbf{r}(t) + \mathbf{v}\,t_{go} + \tfrac{1}{2}\mathbf{g}\,t_{go}^2\right]$  
-- **ZEV** (Zero Effort Velocity): $\text{ZEV} = \mathbf{v}_f^d - \left[\mathbf{v}(t) + \mathbf{g}\,t_{go}\right]$
-- $\mathbf{p}\,t_{go}^2/12$: the **divert manoeuvre term**, where $\mathbf{p} = [\dot{p}_{r_x}, \dot{p}_{r_y}, \dot{p}_{r_z}]^T$ is the barrier repulsion gradient (see §3.6)
-- $-\mathbf{\Phi}\,\text{sgn}(\mathbf{s}_2)$: the **MSS robust term** (see §3.4)
+- **ZEM** (Zero Effort Miss): $$\text{ZEM} = \mathbf{r}_f^d - \left[\mathbf{r}(t) + \mathbf{v}\,t_{go} + \tfrac{1}{2}\mathbf{g}\,t_{go}^2\right]$$  
+- **ZEV** (Zero Effort Velocity): $$\text{ZEV} = \mathbf{v}_f^d - \left[\mathbf{v}(t) + \mathbf{g}\,t_{go}\right]$$
+- $$\mathbf{p}\,t_{go}^2/12$$: the **divert manoeuvre term**, where $$\mathbf{p} = [\dot{p}_{r_x}, \dot{p}_{r_y}, \dot{p}_{r_z}]^T$$ is the barrier repulsion gradient (see §3.6)
+- $$-\mathbf{\Phi}\,\text{sgn}(\mathbf{s}_2)$$: the **MSS robust term** (see §3.4)
 
 > **Implementation note**: The paper uses the hard sign function $\text{sgn}(\mathbf{s}_2)$. This implementation substitutes a **saturation function** with boundary layer width $\varepsilon = 0.1$ (via `saturation.py`) to eliminate high-frequency chattering in the numerical simulation:
 > $$\text{sgn}(s_2) \;\approx\; \text{sat}(s_2,\,\varepsilon) = \begin{cases} s_2/\varepsilon & |s_2| < \varepsilon \\ \text{sgn}(s_2) & |s_2| \geq \varepsilon \end{cases}$$
