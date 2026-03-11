@@ -65,21 +65,22 @@ The vehicle dynamics follow a 3-DOF model in a local East-North-Up (ENU) frame c
 │   Sets ICs, calls tgo_init, initAcc, then drives rk45 loop     │
 └────────────┬───────────────────────────────────────────────────┘
              │  f(t, y)  called at each integration step
-             ▼
+             ↓
 ┌────────────────────────────────────────────────────────────────┐
 │                        ODE RHS (in main.py)                    │
 │                                                                │
 │  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌───────────┐    │
 │  │ barriers │   │  divert  │   │ sliding  │   │saturation │    │
-│  │ (terrain │──▶│(repulsion│   │  (SMC    │──▶│ (boundary │   │
+│  │ (terrain │--→│(repulsion│   │  (SMC    │--→│ (boundary │    │
 │  │  query)  │   │ gradient)│   │ surface) │   │  layer)   │    │
 │  └────┬─────┘   └────┬─────┘   └────┬─────┘   └─────┬─────┘    │
-│       │              │              │                │         │
-│       └──────────────┴──────────────┴────────────────┘         │
+│       │              │              │               │          │
+│       └──────────────┴──────────────┴───────────────┘          │
 │                             │                                  │
 │                    a = a_ogl + a_divert + a_smc                │
 │                             │                                  │
-│                    ┌────────▼────────┐                         │
+│                             ↓                                  │
+│                    ┌─────────────────┐                         │
 │                    │  Thrust model   │                         │
 │                    │ (T = a·m, capped│                         │
 │                    │  + noise band)  │                         │
@@ -87,17 +88,17 @@ The vehicle dynamics follow a 3-DOF model in a local East-North-Up (ENU) frame c
 │                             │                                  │
 │              ẋ = [v, g + T/m, ṁ, ȧ]                            │
 └─────────────────────────────┬──────────────────────────────────┘
-                              │
-              ┌───────────────▼───────────────┐
+                              ↓
+              ┌───────────────────────────────┐
               │         rk45.py               │
               │  Adaptive RK45 integrator     │
               └───────────────┬───────────────┘
-                              │
-              ┌───────────────▼───────────────┐
+                              ↓
+              ┌───────────────────────────────┐
               │      rk45_results.npz         │
               └───────────────┬───────────────┘
-                              │
-              ┌───────────────▼───────────────┐
+                              ↓
+              ┌───────────────────────────────┐
               │           show.py             │
               │  Load & visualise + Unity cam │
               └───────────────────────────────┘
