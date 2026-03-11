@@ -1,6 +1,6 @@
 # OTBU — Online Terrain Barrier Update
 
-> Python simulation of the **OTBU** algorithm from *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance"* (Basar & Ghosh, IEEE RA-L). Implements real-time terrain barrier generation integrated with the MSS-OTALG guidance law for autonomous precision soft landing on Mars.
+> Python simulation of the **OTBU** algorithm from *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance"* (Basar & Ghosh, Manuscript Under Preparation for IEEE RA-L). Implements real-time terrain barrier generation integrated with the MSS-OTALG guidance law for autonomous precision soft landing on Mars.
 
 ---
 
@@ -69,13 +69,13 @@ The vehicle dynamics follow a 3-DOF model in a local East-North-Up (ENU) frame c
 ┌────────────────────────────────────────────────────────────────┐
 │                        ODE RHS (in main.py)                    │
 │                                                                │
-│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌───────────┐  │
-│  │ barriers │   │  divert  │   │ sliding  │   │saturation │  │
-│  │ (terrain │──▶│(repulsion│   │  (SMC    │──▶│ (boundary │  │
-│  │  query)  │   │ gradient)│   │ surface) │   │  layer)   │  │
-│  └────┬─────┘   └────┬─────┘   └────┬─────┘   └─────┬─────┘  │
-│       │              │              │                │        │
-│       └──────────────┴──────────────┴────────────────┘        │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌───────────┐    │
+│  │ barriers │   │  divert  │   │ sliding  │   │saturation │    │
+│  │ (terrain │──▶│(repulsion│   │  (SMC    │──▶│ (boundary │   │
+│  │  query)  │   │ gradient)│   │ surface) │   │  layer)   │    │
+│  └────┬─────┘   └────┬─────┘   └────┬─────┘   └─────┬─────┘    │
+│       │              │              │                │         │
+│       └──────────────┴──────────────┴────────────────┘         │
 │                             │                                  │
 │                    a = a_ogl + a_divert + a_smc                │
 │                             │                                  │
@@ -85,7 +85,7 @@ The vehicle dynamics follow a 3-DOF model in a local East-North-Up (ENU) frame c
 │                    │  + noise band)  │                         │
 │                    └────────┬────────┘                         │
 │                             │                                  │
-│              ẋ = [v, g + T/m, ṁ, ȧ]                           │
+│              ẋ = [v, g + T/m, ṁ, ȧ]                            │
 └─────────────────────────────┬──────────────────────────────────┘
                               │
               ┌───────────────▼───────────────┐
@@ -94,7 +94,7 @@ The vehicle dynamics follow a 3-DOF model in a local East-North-Up (ENU) frame c
               └───────────────┬───────────────┘
                               │
               ┌───────────────▼───────────────┐
-              │      rk45_results.npz          │
+              │      rk45_results.npz         │
               └───────────────┬───────────────┘
                               │
               ┌───────────────▼───────────────┐
@@ -634,7 +634,7 @@ Values from paper Table I [[OTBU]](#11-references), with code discrepancies note
 
 **Primary paper (this implementation):**
 
-> **[OTBU]** S. Z. Basar and S. Ghosh, *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"* IEEE Robotics and Automation Letters (RA-L), 2025.
+> **[OTBU]** S. Z. Basar and S. Ghosh, *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"* Manuscript Under Preparation for IEEE Robotics and Automation Letters (RA-L), 2025.
 
 **References from the paper:**
 
