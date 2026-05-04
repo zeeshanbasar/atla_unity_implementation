@@ -1,6 +1,6 @@
-# OTBU — Online Terrain Barrier Update
+# ATLA — Adaptive Terrain-safe Landing Algorithm
 
-> Python simulation of the **OTBU** algorithm from *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance"* (Basar & Ghosh, Manuscript Under Preparation for IEEE RA-L). Implements real-time terrain barrier generation integrated with the MSS-OTALG guidance law for autonomous precision soft landing on Mars.
+> Python simulation of the **ATLA** algorithm from *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance"* (Basar & Ghosh, Manuscript Under Preparation for IEEE RA-L). Implements real-time terrain barrier generation integrated with the MSS-OTALG guidance law for autonomous precision soft landing on Mars.
 
 ---
 
@@ -13,7 +13,7 @@
    - 3.2 [Time-to-Go Estimation](#32-time-to-go-estimation)
    - 3.3 [MSS-OTALG Guidance Law](#33-mss-otalg-guidance-law)
    - 3.4 [Sliding Mode Control](#34-sliding-mode-control)
-   - 3.5 [OTBU Algorithm — Terrain Barrier Update](#35-otbu-algorithm--terrain-barrier-update)
+   - 3.5 [ATLA Algorithm — Terrain Barrier Update](#35-atla-algorithm--terrain-barrier-update)
    - 3.6 [Divert Repulsion Field](#36-divert-repulsion-field)
    - 3.7 [Composite Acceleration Command (Full)](#37-composite-acceleration-command-full)
 4. [Module Reference](#4-module-reference)
@@ -40,16 +40,16 @@
 
 ## 1. Project Overview
 
-This repository is a Python/Unity simulation implementation of the **Online Terrain Barrier Update (OTBU)** algorithm, presented in:
+This repository is a Python/Unity simulation implementation of the **Adaptive Terrain-safe Landing Algorithm (ATLA)** algorithm, presented in:
 
 > **S. Z. Basar and S. Ghosh**, *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"* Manuscript Under Preparation for IEEE Robotics and Automation Letters (RA-L). [[Paper]](#11-references)
 
-OTBU generates terrain barrier functions on the fly using onboard elevation data (a world-coordinate-registered grid map from a downward-facing camera), and feeds them into the **Multiple Sliding Surfaces – Optimal Terrain Avoidance Landing Guidance (MSS-OTALG)** law from [[1]](#11-references) to steer the spacecraft away from hazardous terrain while achieving precision soft landing.
+ATLA generates terrain barrier functions on the fly using onboard elevation data (a world-coordinate-registered grid map from a downward-facing camera), and feeds them into the **Multiple Sliding Surfaces – Optimal Terrain Avoidance Landing Guidance (MSS-OTALG)** law from [[1]](#11-references) to steer the spacecraft away from hazardous terrain while achieving precision soft landing.
 
 The key components are:
 
 - **MSS-OTALG** [[1]](#11-references): the base guidance law, combining ZEM/ZEV optimal guidance, a terrain divert term, and a Multiple Sliding Surfaces (MSS) robust correction term
-- **OTBU (Algorithm 1)**: online update of polynomial barrier functions $\rho_x, \rho_y, \rho_z$ at adaptive intervals, based on real-time terrain peak detection via H-maxima transform
+- **ATLA (Algorithm 1)**: online update of polynomial barrier functions $\rho_x, \rho_y, \rho_z$ at adaptive intervals, based on real-time terrain peak detection via H-maxima transform
 - **Unity terrain simulation**: a Unity scene provides live elevation map data over TCP, substituting for an onboard depth camera in simulation
 - **Adaptive RK45 integration**: trajectory propagation with variable step size
 
@@ -113,7 +113,7 @@ Unity TCP Server (port 5555)
 
 ## 3. Mathematical Foundations
 
-The mathematical basis of this implementation follows the paper [[OTBU]](#11-references) and the base guidance law from [[1]](#11-references). Notation is preserved from those works.
+The mathematical basis of this implementation follows the paper [[ATLA]](#11-references) and the base guidance law from [[1]](#11-references). Notation is preserved from those works.
 
 ### 3.1 Equations of Motion
 
@@ -157,7 +157,7 @@ tf = tgo_init(r0, v0, rf, vf) + 20
 
 ### 3.3 MSS-OTALG Guidance Law
 
-The base guidance law is **MSS-OTALG** [[1]](#11-references). The full guidance acceleration command is (Eq. (2) of [[OTBU]](#11-references)):
+The base guidance law is **MSS-OTALG** [[1]](#11-references). The full guidance acceleration command is (Eq. (2) of [[ATLA]](#11-references)):
 
 $$\mathbf{a}_c = \frac{6}{t_{go}^2}\,\text{ZEM} - \frac{2}{t_{go}}\,\text{ZEV} + \mathbf{p}\,\frac{t_{go}^2}{12} - \mathbf{\Phi}\,\text{sgn}(\mathbf{s}_2)$$
 
@@ -193,15 +193,15 @@ where $k_1 = 0.2$, $k_2 = 0.8$, and $a_{p,max}$ is the maximum perturbation acce
 
 ---
 
-### 3.5 OTBU Algorithm — Terrain Barrier Update
+### 3.5 ATLA Algorithm — Terrain Barrier Update
 
-**Algorithm 1** (from [[OTBU]](#11-references)) generates the polynomial barrier functions $\rho_i$ online. It is initialised with: estimated highest point $\mathbf{r}_H$, desired landing site $\mathbf{r}_f^d$, last update time $t_{last}$, safety margin $\delta$, update intervals $0 < \Delta t_1 < \Delta t_2$, switching distance $\Theta$, peak suppression level $\alpha$, and barrier order $m$.
+**Algorithm 1** (from [[ATLA]](#11-references)) generates the polynomial barrier functions $\rho_i$ online. It is initialised with: estimated highest point $\mathbf{r}_H$, desired landing site $\mathbf{r}_f^d$, last update time $t_{last}$, safety margin $\delta$, update intervals $0 < \Delta t_1 < \Delta t_2$, switching distance $\Theta$, peak suppression level $\alpha$, and barrier order $m$.
 
 ```
-Algorithm 1: Online Terrain Barrier Update (OTBU)
+Algorithm 1: Adaptive Terrain-safe Landing Algorithm (ATLA)
 Initialise: rH, rf, tlast, δ, Δt1, Δt2, Θ, α, m
 
-procedure OTBU(F, r, t):
+procedure ATLA(F, r, t):
   # 1. Set update interval based on distance to landing site
   if ‖r − rf‖ < Θ:  Δt ← Δt1
   else:              Δt ← Δt2
@@ -248,7 +248,7 @@ procedure OTBU(F, r, t):
 
 ### 3.6 Divert Repulsion Field
 
-For each axis $i \in \{x, y, z\}$, given the signed distance from the barrier $d_i \triangleq r_i - \rho_i$, the repulsion gradient component is (Eq. (3) of [[OTBU]](#11-references)):
+For each axis $i \in \{x, y, z\}$, given the signed distance from the barrier $d_i \triangleq r_i - \rho_i$, the repulsion gradient component is (Eq. (3) of [[ATLA]](#11-references)):
 
 $$\psi_i = \frac{\ell_{2,i}}{d_i^2 + \ell_{1,i}}, \qquad \dot{p}_{r_i} = \frac{d_i\,\ell_{2,i}\,\ell_{3,i}\,e^{-\psi_i}}{(d_i^2 + \ell_{1,i})^2}$$
 
@@ -260,7 +260,7 @@ with constants $\ell_{1,i} = 1$, $\ell_{2,i} = 9500$, $\ell_{3,i} = 500$ for all
 
 The complete MSS-OTALG guidance command, as implemented, is:
 
-$$\mathbf{a}_c = \underbrace{\frac{6\,\text{ZEM}}{t_{go}^2} - \frac{2\,\text{ZEV}}{t_{go}}}_{\text{ZEM/ZEV optimal term}} + \underbrace{\mathbf{p}\,\frac{t_{go}^2}{12}}_{\text{OTBU divert term}} + \underbrace{-\mathbf{\Phi}\,\text{sat}(\mathbf{s}_2,\varepsilon)}_{\text{MSS robust term}}$$
+$$\mathbf{a}_c = \underbrace{\frac{6\,\text{ZEM}}{t_{go}^2} - \frac{2\,\text{ZEV}}{t_{go}}}_{\text{ZEM/ZEV optimal term}} + \underbrace{\mathbf{p}\,\frac{t_{go}^2}{12}}_{\text{ATLA divert term}} + \underbrace{-\mathbf{\Phi}\,\text{sat}(\mathbf{s}_2,\varepsilon)}_{\text{MSS robust term}}$$
 
 This is passed through a first-order actuator lag (time constant $\tau$) and converted to thrust via $\mathbf{T} = \mathbf{a}_c \cdot m$.
 
@@ -576,7 +576,7 @@ This streams the trajectory back through the Unity camera and plots mass and acc
 
 ## 9. Parameters Reference
 
-Values from paper Table I [[OTBU]](#11-references), with code discrepancies noted.
+Values from paper Table I [[ATLA]](#11-references), with code discrepancies noted.
 
 | Parameter | Symbol | Paper Value | Code Value | Units | Source |
 |---|---|---|---|---|---|
@@ -635,7 +635,7 @@ Values from paper Table I [[OTBU]](#11-references), with code discrepancies note
 
 **Primary paper (this implementation):**
 
-> **[OTBU]** S. Z. Basar and S. Ghosh, *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"* Manuscript Under Preparation for IEEE Robotics and Automation Letters (RA-L), 2025.
+> **[ATLA]** S. Z. Basar and S. Ghosh, *"Robust and Near-Fuel-Optimal Landing Guidance with Online Terrain Avoidance,"* Manuscript Under Preparation for IEEE Robotics and Automation Letters (RA-L), 2025.
 
 **References from the paper:**
 
